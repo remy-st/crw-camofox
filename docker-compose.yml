@@ -29,15 +29,20 @@ services:
       - CRW_CONFIG=config.docker
     volumes:
       - ./config.docker.toml:/app/config.docker.toml:ro
-    # Host protection for untrusted PDF/scrape input.
-    # With config.docker.toml `[document] sandbox = true`, each parse runs in a
-    # child with its own RLIMIT_AS.
+    # ── Host protection (defense-in-depth for untrusted PDF/scrape input) ──
+    # `mem_limit` is the hard ceiling: no matter what a malicious upload does,
+    # this container (and its sandboxed PDF-parse children, which share this
+    # cgroup) can never exceed it — the host stays safe. With config.docker.toml
+    # `[document] sandbox = true`, each parse runs in a child with its own
+    # RLIMIT_AS, so peak ≈ base + max_concurrent_parses × sandbox_memory.
+    mem_limit: 2g
+    memswap_limit: 2g # no swap escape hatch — count swap against the cap
     pids_limit: 512            # bound fork-bombs / runaway worker spawning
     read_only: true            # immutable root FS; nothing the parser can drop survives
     tmpfs:
-      - /tmp                   # the only writable scratch (sandbox children, if any)
+      - /tmp # the only writable scratch (sandbox children, if any)
     cap_drop:
-      - ALL                    # engine needs no Linux capabilities
+      - ALL # engine needs no Linux capabilities
     security_opt:
       - no-new-privileges:true # a child can never gain privileges via setuid
 
@@ -56,7 +61,7 @@ services:
   camofox:
     # Pinned (never `:latest`) so upgrades are deliberate. Base image is
     # node:22-slim (ships curl, not wget).
-    image: ghcr.io/redf0x1/camofox-browser:2.4.6
+    image: crw-camofox-browser:2.4.6-arm64
     restart: unless-stopped
     environment:
       - CAMOFOX_HOST=0.0.0.0
@@ -71,6 +76,18 @@ services:
       # the way still leave this container; restrict its egress at the network
       # level if that matters for your deployment.
       - CAMOFOX_ALLOW_PRIVATE_NETWORK=false
+      # Fixed, known path (rather than the image's default ~/.camofox/downloads)
+      # so it lines up 1:1 with the bind mount below — crw-browser-bridge
+      # reports download results as host paths under the same directory.
+      - CAMOFOX_DOWNLOADS_DIR=/downloads
+    volumes:
+      # Host-visible landing spot for `browser(download)` results. Files land
+      # at `./downloads/<userId>/<filename>` (camofox keys one subdirectory
+      # per userId) — crw-browser-bridge's CAMOFOX_BRIDGE_DOWNLOADS_HOST_DIR
+      # must match this same host-side path (see that service below).
+      - ./downloads:/downloads
+    mem_limit: 2g
+    memswap_limit: 2g
     shm_size: "1g"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:9377/health"]
@@ -127,6 +144,51 @@ services:
     ports:
       - "127.0.0.1:9378:8080"
     pids_limit: 256
+
+  # crw-authored counterpart to camofox-mcp above, for HTTP/JSON clients that
+  # can't speak MCP (e.g. the Pi coding agent — no MCP client support at all,
+  # only plain `registerTool` fetch calls). Consolidates the interactive
+  # subset of the camofox-browser REST API into one `POST /browser` action-
+  # dispatch endpoint, AND owns idle-tab cleanup: camofox's own idle reaper
+  # only fires once the whole server has zero live tabs, so a tab a caller
+  # forgets to close blocks it indefinitely. A TUI agent has no reliable
+  # shutdown hook (kill/crash/closed terminal all skip cleanup code), so this
+  # service tracks last-activity per caller itself and force-closes anything
+  # idle past CAMOFOX_BRIDGE_IDLE_TIMEOUT_MINUTES, independent of any
+  # client's lifecycle. Reuses the `crw` image (same Dockerfile, same build
+  # cache) with a different entrypoint binary rather than a second image.
+  crw-browser-bridge:
+    build: .
+    command: ["crw-browser-bridge"]
+    restart: unless-stopped
+    depends_on:
+      camofox:
+        condition: service_healthy
+    environment:
+      - RUST_LOG=info
+      - CAMOFOX_URL=http://camofox:9377
+      - CAMOFOX_API_KEY=${CAMOFOX_API_KEY:-}
+      - CAMOFOX_BRIDGE_IDLE_TIMEOUT_MINUTES=${CAMOFOX_BRIDGE_IDLE_TIMEOUT_MINUTES:-30}
+      # Same rationale as camofox-mcp's key above: required once the bridge
+      # is reachable outside the compose network. Override in `.env` before
+      # exposing this port anywhere beyond your own machine.
+      - CAMOFOX_BRIDGE_API_KEY=${CAMOFOX_BRIDGE_API_KEY:-crw-local-dev-insecure-default-key}
+      # Must match camofox's `./downloads:/downloads` bind mount above — this
+      # is the host-side half of that same mapping, reported back verbatim in
+      # `browser(download)` results so they're paths the caller can actually open.
+      - CAMOFOX_BRIDGE_DOWNLOADS_HOST_DIR=./downloads
+    ports:
+      - "127.0.0.1:9379:9379"
+    mem_limit: 128m
+    memswap_limit: 128m
+    pids_limit: 64
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
 
   # Primary JS renderer — lightweight (~64 MB), fast startup.
   # Handles most static-JS sites. Falls back to Camofox for complex SPAs.

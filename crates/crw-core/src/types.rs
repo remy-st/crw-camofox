@@ -1154,6 +1154,14 @@ pub struct CrawlRequest {
     /// credentials do not belong here.
     #[serde(default)]
     pub headers: std::collections::HashMap<String, String>,
+    /// Only enqueue discovered links whose URL contains at least one of these
+    /// substrings. Empty ⇒ no restriction. Mirrors `V2MapRequest::include_paths`.
+    #[serde(default)]
+    pub include_paths: Vec<String>,
+    /// Never enqueue discovered links whose URL contains any of these
+    /// substrings. Empty ⇒ no restriction. Mirrors `V2MapRequest::exclude_paths`.
+    #[serde(default)]
+    pub exclude_paths: Vec<String>,
 }
 
 /// Resolve the effective `render_js` decision from a per-request value and the
@@ -1978,6 +1986,9 @@ pub struct CrawlStartResponse {
 pub struct MapRequest {
     pub url: String,
     pub max_depth: Option<u32>,
+    /// Case-insensitive substring filter applied to discovered URLs.
+    #[serde(default)]
+    pub search: Option<String>,
     #[serde(default = "default_true")]
     pub use_sitemap: bool,
     /// When true (default), fall back to a short-budget BFS crawl after the

@@ -22,7 +22,8 @@ pub struct SearxngParams {
     pub pageno: Option<u32>,
     pub safesearch: Option<u8>,
     /// Engines for the Camofox backend (see `SearchRequest.engines`). Defaulted
-    /// to `[Google]` by `map_to_searxng_params`. The SearXNG client ignores it.
+    /// to `[DuckDuckGo]` by `map_to_searxng_params` (Google's macro hangs on
+    /// this host). The SearXNG client ignores it.
     pub camofox_engines: Vec<SearchEngine>,
 }
 
@@ -133,11 +134,17 @@ pub fn map_to_searxng_params(req: &SearchRequest, config: &SearchConfig) -> Sear
         Some(engines.join(","))
     };
 
-    // Camofox engine selection. Empty/omitted ⇒ Google, preserving today's
-    // single-engine behavior. Independent of the SearXNG `engines` param above.
+    // Camofox engine selection. Empty/omitted ⇒ DuckDuckGo. Upstream defaults
+    // to Google, but on this host the `@google_search` camofox macro hangs
+    // indefinitely (bot-detection challenge that never resolves) and its 30s
+    // timeout wedges the shared warm tab, poisoning every later search. DDG
+    // navigates its SERP URL directly (`https://duckduckgo.com/?q=...`) which
+    // is fast and reliable here — pick it as the default so no consumer
+    // (crw REST, Hermes firecrawl provider, MCP) hangs on Google unless it
+    // explicitly asks for it. Independent of the SearXNG `engines` param above.
     let camofox_engines = match &req.engines {
         Some(list) if !list.is_empty() => list.clone(),
-        _ => vec![SearchEngine::Google],
+        _ => vec![SearchEngine::DuckDuckGo],
     };
 
     SearxngParams {
@@ -190,9 +197,9 @@ mod tests {
     }
 
     #[test]
-    fn engines_default_to_google_when_unset() {
+    fn engines_default_to_duckduckgo_when_unset() {
         let p = map_to_searxng_params(&req("rust"), &cfg());
-        assert_eq!(p.camofox_engines, vec![SearchEngine::Google]);
+        assert_eq!(p.camofox_engines, vec![SearchEngine::DuckDuckGo]);
     }
 
     #[test]
@@ -207,11 +214,11 @@ mod tests {
     }
 
     #[test]
-    fn empty_engines_list_defaults_to_google() {
+    fn empty_engines_list_defaults_to_duckduckgo() {
         let mut r = req("rust");
         r.engines = Some(vec![]);
         let p = map_to_searxng_params(&r, &cfg());
-        assert_eq!(p.camofox_engines, vec![SearchEngine::Google]);
+        assert_eq!(p.camofox_engines, vec![SearchEngine::DuckDuckGo]);
     }
 
     #[test]

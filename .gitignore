@@ -15,3 +15,6 @@ config.local.toml
 # Service-account / API-key files (never commit)
 bench/secrets/
 *-service-account*.json
+
+# crw-browser-bridge downloads bind-mount target
+/downloads/

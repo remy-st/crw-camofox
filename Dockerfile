@@ -70,11 +70,12 @@ ENV CARGO_PROFILE_RELEASE_LTO=thin \
 RUN set -eux; \
     RUST_TARGET="$(cat /rust_target)"; \
     cargo build --release --target "$RUST_TARGET" \
-      -p crw-server --features cdp,camofox,impersonated -p crw-mcp -p crw-cli; \
+      -p crw-server --features cdp,camofox,impersonated -p crw-mcp -p crw-cli -p crw-browser-bridge; \
     mkdir -p /out; \
     cp "target/${RUST_TARGET}/release/crw" \
        "target/${RUST_TARGET}/release/crw-server" \
-       "target/${RUST_TARGET}/release/crw-mcp" /out/
+       "target/${RUST_TARGET}/release/crw-mcp" \
+       "target/${RUST_TARGET}/release/crw-browser-bridge" /out/
 
 FROM debian:bookworm-slim
 
@@ -83,6 +84,7 @@ RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/
 COPY --from=builder /out/crw /usr/local/bin/crw
 COPY --from=builder /out/crw-server /usr/local/bin/crw-server
 COPY --from=builder /out/crw-mcp /usr/local/bin/crw-mcp
+COPY --from=builder /out/crw-browser-bridge /usr/local/bin/crw-browser-bridge
 COPY config.default.toml /app/config.default.toml
 COPY config.docker.toml /app/config.docker.toml
 
@@ -91,6 +93,6 @@ WORKDIR /app
 LABEL org.opencontainers.image.source=https://github.com/adambenhassen/crw-camofox
 LABEL io.modelcontextprotocol.server.name="io.github.us/crw"
 
-EXPOSE 3000
+EXPOSE 3000 9379
 
 CMD ["crw-server"]

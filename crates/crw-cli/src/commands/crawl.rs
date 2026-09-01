@@ -142,6 +142,8 @@ pub async fn run(mut args: CrawlArgs) -> Result<(), CmdError> {
         wait_for: None,
         renderer: None,
         country: None,
+        include_paths: Vec::new(),
+        exclude_paths: Vec::new(),
     };
 
     let id = Uuid::new_v4();

@@ -108,6 +108,8 @@ fn enqueue_discovered_links(
     visited: &mut HashSet<String>,
     queue: &mut VecDeque<(String, u32)>,
     depth: u32,
+    include_paths: &[String],
+    exclude_paths: &[String],
 ) {
     let page_links = extract_links(html, page_url);
     for link in page_links {
@@ -123,6 +125,13 @@ fn enqueue_discovered_links(
             // with `CrawlRequest::headers` it would replay the caller's
             // credentials to a different service on the same host.
             if link_url.origin().ascii_serialization() != origin {
+                continue;
+            }
+            if !include_paths.is_empty() && !include_paths.iter().any(|p| link.contains(p.as_str()))
+            {
+                continue;
+            }
+            if exclude_paths.iter().any(|p| link.contains(p.as_str())) {
                 continue;
             }
             if is_static_asset(&link_url) {
@@ -438,6 +447,8 @@ async fn run_crawl_inner(opts: CrawlOptions<'_>) {
                 &mut visited,
                 &mut queue,
                 depth,
+                &req.include_paths,
+                &req.exclude_paths,
             );
         }
 

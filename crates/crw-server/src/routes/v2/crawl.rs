@@ -51,6 +51,10 @@ pub struct V2CrawlRequest {
     pub renderer: Option<RequestedRenderer>,
     #[serde(default)]
     pub country: Option<String>,
+    #[serde(default)]
+    pub include_paths: Vec<String>,
+    #[serde(default)]
+    pub exclude_paths: Vec<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -161,6 +165,8 @@ pub async fn start_crawl(
         wait_for: opts.wait_for,
         renderer: v2.renderer,
         country: v2.country,
+        include_paths: v2.include_paths,
+        exclude_paths: v2.exclude_paths,
     };
     validate_crawl_renderer(&req, &state)?;
 

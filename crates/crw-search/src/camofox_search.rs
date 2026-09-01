@@ -811,7 +811,14 @@ fn is_stale_tab(e: &SearchError) -> bool {
     match e {
         SearchError::Upstream { status, .. } => *status == 404 || *status >= 500,
         SearchError::Transport(_) => true,
-        SearchError::Timeout | SearchError::InvalidResponse(_) => false,
+        // Timeout counts as stale too: a SERP load that hangs past the
+        // timeout leaves the warm tab wedged (its navigation never settles),
+        // so reusing it makes every later search fail the same way. Treating
+        // it as stale recreates the tab and retries once, which makes the
+        // warm tab self-healing after any hang. InvalidResponse stays false —
+        // the tab itself is fine, the page was just unparseable.
+        SearchError::Timeout => true,
+        SearchError::InvalidResponse(_) => false,
     }
 }
 

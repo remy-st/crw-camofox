@@ -389,6 +389,8 @@ impl EngineSource {
             wait_for: None,
             renderer: None,
             country: None,
+            include_paths: Vec::new(),
+            exclude_paths: Vec::new(),
         };
         let initial = CrawlState {
             id: uuid::Uuid::new_v4(),
