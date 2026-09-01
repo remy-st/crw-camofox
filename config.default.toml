@@ -182,7 +182,7 @@ always_run = false
 [search]
 enabled = true
 timeout_ms = 15000
-default_limit = 5
+default_limit = 7
 max_limit = 20
 # W0 (gated, default false): pin search infoboxes[]/answers[] (Wikidata/Wikipedia
 # structured facts the results[] path discards) at the front of the answer pool.

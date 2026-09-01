@@ -441,7 +441,7 @@ fn default_search_timeout_ms() -> u64 {
     15_000
 }
 fn default_search_limit() -> u32 {
-    5
+    7
 }
 fn default_search_max_limit() -> u32 {
     20
