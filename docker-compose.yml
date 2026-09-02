@@ -4,13 +4,13 @@ services:
     ports:
       # Override the host bind address / port via `.env` (CRW_BIND_ADDRESS,
       # CRW_HOST_PORT) for boxes already using 3000, or to stop publishing on
-      # public interfaces (set CRW_BIND_ADDRESS=127.0.0.1 when fronting crw
-      # with a reverse proxy). Namespaced to `crw` so they can't collide with a
+      # public interfaces (default 127.0.0.1; set CRW_BIND_ADDRESS=0.0.0.0
+      # to publish on all interfaces). Namespaced to `crw` so they can't collide with a
       # generic `HOST_PORT` in the operator's env. Despite the `CRW_` prefix
       # this is Compose-only host-side interpolation: it is NOT passed into the
       # container, so the engine's figment config never sees it. Container port
-      # stays 3000; default bind stays 0.0.0.0 (all interfaces).
-      - "${CRW_BIND_ADDRESS:-0.0.0.0}:${CRW_HOST_PORT:-3000}:3000"
+      # stays 3000; default bind is loopback-only (127.0.0.1).
+      - "${CRW_BIND_ADDRESS:-127.0.0.1}:${CRW_HOST_PORT:-3000}:3000"
     depends_on:
       lightpanda:
         condition: service_started
