@@ -11,6 +11,7 @@ services:
       # container, so the engine's figment config never sees it. Container port
       # stays 3000; default bind is loopback-only (127.0.0.1).
       - "${CRW_BIND_ADDRESS:-127.0.0.1}:${CRW_HOST_PORT:-3000}:3000"
+    restart: unless-stopped
     depends_on:
       lightpanda:
         condition: service_started
