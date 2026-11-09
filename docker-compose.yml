@@ -61,8 +61,9 @@ services:
   # required in `.env` AND set `[renderer.camofox] api_key` in your CRW config.
   camofox:
     # Pinned (never `:latest`) so upgrades are deliberate. Base image is
-    # node:22-slim (ships curl, not wget). Built locally from
-    # redf0x1/camofox-browser@v2.5.0 (ghcr publishes amd64 only) — the build
+    # node:22-slim (ships curl, not wget). Upstream publishes amd64 only, so
+    # amd64 hosts use this image as-is; arm64 hosts (the Mac) build v2.5.0
+    # locally and override `image:` in docker-compose.override.yml. The build
     # fetches the newest supported Camoufox engine at build time (158.0.1-β.41
     # as of this pin).
     #
@@ -72,7 +73,7 @@ services:
     # time, forever. Keep userIds stable (camofox-mcp uses `default`) and run
     # `scripts/prune-camofox-profiles.sh` (7-day TTL, keeps crw/crw-search/
     # default) on a schedule; it prunes only profiles untouched past the TTL.
-    image: crw-camofox-browser:2.5.0-arm64
+    image: ghcr.io/redf0x1/camofox-browser:2.5.0
     restart: unless-stopped
     environment:
       - CAMOFOX_HOST=0.0.0.0
