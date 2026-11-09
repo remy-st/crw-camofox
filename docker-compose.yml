@@ -65,6 +65,13 @@ services:
     # redf0x1/camofox-browser@v2.5.0 (ghcr publishes amd64 only) — the build
     # fetches the newest supported Camoufox engine at build time (158.0.1-β.41
     # as of this pin).
+    #
+    # Profile growth: the browser profile dir is keyed by `userId` and camofox
+    # never deletes one (that is what keeps logins across restarts). A client
+    # that mints a fresh userId per session leaves a ~40 MB dir behind every
+    # time, forever. Keep userIds stable (camofox-mcp uses `default`) and run
+    # `scripts/prune-camofox-profiles.sh` (7-day TTL, keeps crw/crw-search/
+    # default) on a schedule; it prunes only profiles untouched past the TTL.
     image: crw-camofox-browser:2.5.0-arm64
     restart: unless-stopped
     environment:
