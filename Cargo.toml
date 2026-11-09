@@ -7,7 +7,6 @@ members = [
     "crates/crw-crawl",
     "crates/crw-search",
     "crates/crw-server",
-    "crates/crw-browser-bridge",
     "crates/crw-mcp",
     "crates/crw-mcp-proto",
     "crates/crw-cli",

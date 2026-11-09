@@ -88,14 +88,12 @@ services:
       # level if that matters for your deployment.
       - CAMOFOX_ALLOW_PRIVATE_NETWORK=false
       # Fixed, known path (rather than the image's default ~/.camofox/downloads)
-      # so it lines up 1:1 with the bind mount below — crw-browser-bridge
-      # reports download results as host paths under the same directory.
+      # so it lines up 1:1 with the bind mount below.
       - CAMOFOX_DOWNLOADS_DIR=/downloads
     volumes:
-      # Host-visible landing spot for `browser(download)` results. Files land
-      # at `./downloads/<userId>/<filename>` (camofox keys one subdirectory
-      # per userId) — crw-browser-bridge's CAMOFOX_BRIDGE_DOWNLOADS_HOST_DIR
-      # must match this same host-side path (see that service below).
+      # Host-visible landing spot for browser downloads. Files land at
+      # `./downloads/<userId>/<filename>` (camofox keys one subdirectory per
+      # userId); camofox-mcp's download tools read them through the API.
       - ./downloads:/downloads
     mem_limit: 2g
     memswap_limit: 2g
@@ -155,51 +153,6 @@ services:
     ports:
       - "127.0.0.1:9378:8080"
     pids_limit: 256
-
-  # crw-authored counterpart to camofox-mcp above, for HTTP/JSON clients that
-  # can't speak MCP (e.g. the Pi coding agent — no MCP client support at all,
-  # only plain `registerTool` fetch calls). Consolidates the interactive
-  # subset of the camofox-browser REST API into one `POST /browser` action-
-  # dispatch endpoint, AND owns idle-tab cleanup: camofox's own idle reaper
-  # only fires once the whole server has zero live tabs, so a tab a caller
-  # forgets to close blocks it indefinitely. A TUI agent has no reliable
-  # shutdown hook (kill/crash/closed terminal all skip cleanup code), so this
-  # service tracks last-activity per caller itself and force-closes anything
-  # idle past CAMOFOX_BRIDGE_IDLE_TIMEOUT_MINUTES, independent of any
-  # client's lifecycle. Reuses the `crw` image (same Dockerfile, same build
-  # cache) with a different entrypoint binary rather than a second image.
-  crw-browser-bridge:
-    build: .
-    command: ["crw-browser-bridge"]
-    restart: unless-stopped
-    depends_on:
-      camofox:
-        condition: service_healthy
-    environment:
-      - RUST_LOG=info
-      - CAMOFOX_URL=http://camofox:9377
-      - CAMOFOX_API_KEY=${CAMOFOX_API_KEY:-}
-      - CAMOFOX_BRIDGE_IDLE_TIMEOUT_MINUTES=${CAMOFOX_BRIDGE_IDLE_TIMEOUT_MINUTES:-30}
-      # Same rationale as camofox-mcp's key above: required once the bridge
-      # is reachable outside the compose network. Override in `.env` before
-      # exposing this port anywhere beyond your own machine.
-      - CAMOFOX_BRIDGE_API_KEY=${CAMOFOX_BRIDGE_API_KEY:-crw-local-dev-insecure-default-key}
-      # Must match camofox's `./downloads:/downloads` bind mount above — this
-      # is the host-side half of that same mapping, reported back verbatim in
-      # `browser(download)` results so they're paths the caller can actually open.
-      - CAMOFOX_BRIDGE_DOWNLOADS_HOST_DIR=./downloads
-    ports:
-      - "127.0.0.1:9379:9379"
-    mem_limit: 128m
-    memswap_limit: 128m
-    pids_limit: 64
-    read_only: true
-    tmpfs:
-      - /tmp
-    cap_drop:
-      - ALL
-    security_opt:
-      - no-new-privileges:true
 
   # Primary JS renderer — lightweight (~64 MB), fast startup.
   # Handles most static-JS sites. Falls back to Camofox for complex SPAs.

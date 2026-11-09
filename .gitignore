@@ -16,5 +16,5 @@ config.local.toml
 bench/secrets/
 *-service-account*.json
 
-# crw-browser-bridge downloads bind-mount target
+# camofox downloads bind-mount target
 /downloads/
