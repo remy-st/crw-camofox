@@ -25,7 +25,7 @@ CRW ships separate MCP servers for two different jobs:
 | Server | For | Tools |
 |--------|-----|-------|
 | **`crw-mcp`** | One-shot scraping / search | `scrape`, `crawl`, `map`, `search` |
-| **[`camofox-mcp`](https://github.com/redf0x1/camofox-mcp)** (upstream) | *Interactive* browser automation on Camofox (recommended) | 47 tools — navigate, snapshot, click, type, … |
+| **[`camofox-mcp`](https://github.com/redf0x1/camofox-mcp)** (upstream) | *Interactive* browser automation on Camofox (recommended) | 53 tools — navigate, snapshot, click, type, … |
 | **`crw-browse`** | Interactive automation over CDP (Chrome-family; legacy) | `goto`, `tree`, … |
 
 Use `crw-mcp` to *fetch* content. Use an interactive server when the agent must
@@ -407,4 +407,4 @@ stdio MCP config:
 ```
 
 See the [upstream README](https://github.com/redf0x1/camofox-mcp) for the full
-47-tool list, environment variables, and auth options.
+53-tool list, environment variables, and auth options.

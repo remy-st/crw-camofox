@@ -70,10 +70,9 @@ base_url = "http://byparr:8191"
 # Headroom over the default 15s: with auto-start (the Pi extension lazily
 # boots this stack on first use), the first search often runs against a
 # cold Camoufox instance — Firefox launch + fingerprinting + SERP render
-# routinely exceed 15s, and a first-search timeout leaves the warm tab in
-# a stuck state that poisons every search after (timeouts are deliberately
-# not stale-tab-recoverable). 30s fits the cold start while still bounding
-# a genuinely hung tab.
+# routinely exceed 15s, and a first-search timeout costs a tab recreation plus
+# one retry before the search can recover. 30s fits the cold start while still
+# bounding a genuinely hung tab.
 timeout_ms = 30000
 # Multi-query expansion (cycle-2 of the answer-quality loop): the proven win.
 # On a 50-q SimpleQA+FRAMES sample it lifted overall 64%->76% and FRAMES

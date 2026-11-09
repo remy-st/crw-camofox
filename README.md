@@ -22,7 +22,7 @@ behind Cloudflare, sites that block headless Chrome, and web search all work
 out of the box, and every result comes back as clean markdown or JSON through
 the same `/v1` and `/v2` API the Firecrawl SDKs already speak. Point any MCP
 agent at it (Claude Code, Cursor, Windsurf, Cline, Codex, Gemini CLI) and it
-gets six scraping tools plus a 47-tool interactive browser.
+gets six scraping tools plus a 53-tool interactive browser.
 
 This is a fork of [`crw`](https://github.com/us/crw) that swaps the browser
 layer for [Camofox](https://github.com/redf0x1/camofox-browser) and re-backs
@@ -43,7 +43,7 @@ is additive and config-toggled:
 | JS render ladder | `HTTP → Chrome-impersonated HTTP → LightPanda → Chrome` (CDP) | `HTTP → Chrome-impersonated HTTP → LightPanda → Camofox`, then **Byparr** for Cloudflare challenges |
 | Stealth tier | browserless Chromium (SSPL); a Camofox tier exists but is opt-in and stays out of the auto ladder | **Camofox** on the auto ladder by default, shared by render *and* search |
 | `/v1/search` | SearXNG sidecar | **8 engines built in**: Google, Bing, DuckDuckGo, Wikipedia, YouTube, Reddit, Amazon, GitHub |
-| Interactive MCP | `crw-browse` (CDP, 2 tools) | [`camofox-mcp`](https://github.com/redf0x1/camofox-mcp) in the Compose stack: **47 tools** over the same browser |
+| Interactive MCP | `crw-browse` (CDP, 2 tools) | [`camofox-mcp`](https://github.com/redf0x1/camofox-mcp) in the Compose stack: **53 tools** over the same browser |
 | Cloudflare | — | Waits out "Just a moment", hands Turnstile to [Byparr](https://github.com/ThePhaseless/Byparr), caches `cf_clearance` per host |
 
 **How a scrape moves through the ladder:**
@@ -184,7 +184,7 @@ claude mcp add --transport http crw http://localhost:3000/mcp
 
 **Interactive browser**: for agents that must *operate* a site (log in, fill
 forms, click through flows), [`camofox-mcp`](https://github.com/redf0x1/camofox-mcp)
-drives a live Camofox browser with 47 tools (navigate, click, type, scroll,
+drives a live Camofox browser with 53 tools (navigate, click, type, scroll,
 evaluate, screenshot, cookies, sessions, batch). It runs on `localhost:9378`
 and needs a bearer token; the stack ships a loopback-only dev key:
 

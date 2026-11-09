@@ -61,8 +61,11 @@ services:
   # required in `.env` AND set `[renderer.camofox] api_key` in your CRW config.
   camofox:
     # Pinned (never `:latest`) so upgrades are deliberate. Base image is
-    # node:22-slim (ships curl, not wget).
-    image: crw-camofox-browser:2.4.6-arm64
+    # node:22-slim (ships curl, not wget). Built locally from
+    # redf0x1/camofox-browser@v2.5.0 (ghcr publishes amd64 only) — the build
+    # fetches the newest supported Camoufox engine at build time (158.0.1-β.41
+    # as of this pin).
+    image: crw-camofox-browser:2.5.0-arm64
     restart: unless-stopped
     environment:
       - CAMOFOX_HOST=0.0.0.0
@@ -106,7 +109,7 @@ services:
   # container; crw refuses to return a page whose final URL is internal.
   # Pinned (never `:latest`) so upgrades are deliberate.
   byparr:
-    image: ghcr.io/thephaseless/byparr:3.0.4
+    image: ghcr.io/thephaseless/byparr:3.1.1
     restart: unless-stopped
     # Each solve launches its own Firefox; `max_concurrent` defaults to 2.
     shm_size: "2g"
@@ -127,7 +130,7 @@ services:
   # CAMOFOX_HTTP_API_KEY in `.env` (`openssl rand -hex 24`) before exposing it
   # anywhere beyond your own machine.
   camofox-mcp:
-    image: ghcr.io/redf0x1/camofox-mcp:1.14.5
+    image: ghcr.io/redf0x1/camofox-mcp:1.17.0
     restart: unless-stopped
     depends_on:
       camofox:
@@ -199,12 +202,12 @@ services:
   # and without auto-restart the breaker stays open forever and every JS
   # request falls through to Camofox — defeating the lightweight tier.
   lightpanda:
-    image: lightpanda/browser:latest
+    image: lightpanda/browser:1.0.3
     # LightPanda sends usage telemetry to a third-party endpoint by default.
     # Disable it so the default stack makes no unexpected outbound connections —
     # important for air-gapped / compliance deployments. Air-gapped operators who
     # need byte-for-byte reproducibility should additionally pin this image to a
-    # digest (`lightpanda/browser@sha256:...`) instead of the `:latest` tag.
+    # digest (`lightpanda/browser@sha256:...`) instead of the version tag.
     environment:
       - LIGHTPANDA_DISABLE_TELEMETRY=true
     # Refuse private/internal destinations in the browser itself, on the

@@ -376,7 +376,7 @@ async fn try_lightpanda_docker() -> Option<(ManagedBrowser, String)> {
             "-d",
             "-p",
             "0:9222",
-            "lightpanda/browser:latest",
+            "lightpanda/browser:1.0.3",
             // Overrides the image CMD, so the whole serve line has to be
             // repeated. Same reasoning as the native launch above.
             "/bin/lightpanda",

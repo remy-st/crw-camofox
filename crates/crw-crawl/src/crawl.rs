@@ -1377,6 +1377,8 @@ mod tests {
                 &mut visited,
                 &mut queue,
                 0,
+                &[],
+                &[],
             );
             queue.len()
         };
@@ -1479,6 +1481,8 @@ mod tests {
             &mut visited,
             &mut queue,
             0,
+            &[],
+            &[],
         );
         queue
     }
